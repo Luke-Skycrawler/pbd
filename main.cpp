@@ -42,7 +42,7 @@ static const float MODE_COMPLIANCE[eModeMax] = {
 };
 
 class CParticle{
- private:
+ public:
   GLfloat   m_InvMass;
   glm::vec3 m_Position;
   glm::vec3 m_OldPosition;
@@ -137,26 +137,26 @@ public:
 };
 
 class CBall{
-private:
+public:
   float     m_Frequency;
   glm::vec3 m_Position;
   float     m_Radius;
 
 public:
   CBall(float radius) :
-  m_Frequency(3.14f * 0.4f),
-  m_Position(0.0f,0.0f,0.0f),
-  m_Radius(radius){}
+    m_Frequency(3.14f * 0.4f),
+    m_Position(0.0f,0.0f,0.0f),
+    m_Radius(radius){}
 
   void Update(float dt){
-    m_Position.z = cos(m_Frequency) * 2.0f;
-    m_Frequency += dt / 5.0f;
-    if (m_Frequency > 3.14f * 2.0f){ m_Frequency -= 3.14f * 2.0f; }
+    // m_Position.z = cos(m_Frequency) * 2.0f;
+    // m_Frequency += dt / 5.0f;
+    // if (m_Frequency > 3.14f * 2.0f){ m_Frequency -= 3.14f * 2.0f; }
   }
 
   void Render(){
     glTranslatef(m_Position.x, m_Position.y, m_Position.z);
-    static const glm::vec3 color(0.0f, 0.0f, 1.0f);
+    static const glm::vec3 color(0.4f, 0.4f, 0.8f);
     glColor3fv((GLfloat*)&color);
     glutSolidSphere(m_Radius, 30, 30);
   }
@@ -165,7 +165,7 @@ public:
   float      GetRadius()  { return m_Radius;   }
 };
 
-class CCloth{
+class Cloth{
 private:
   int                      m_Width;
   int                      m_Height;
@@ -183,21 +183,26 @@ private:
   }
 
 public:
-  CCloth(float width, float height, int num_width, int num_height):
+  Cloth(float width, float height, int num_width, int num_height):
   m_Width(num_height),
   m_Height(num_height) {
+    reset(width,height);
+  }
+  void reset(float width=2.0f,float height=2.0f){
     m_Particles.resize(m_Width * m_Height);
     for(int w = 0; w < m_Width; w++){
       for(int h = 0; h < m_Height; h++){
-        glm::vec3 pos( width  * ((float)w/(float)m_Width ) - width  * 0.5f,
-                      -height * ((float)h/(float)m_Height) + height * 0.5f,
-                       0.0f );
-        glm::vec3 gravity( 0.0f, -9.8f, 0.0f );
+        glm::vec3 pos( 
+          width  * ((float)w/(float)m_Width ) - width  * 0.5f,
+          0.81f, 
+          height * ((float)h/(float)m_Height) - height * 0.5f
+        );
+        glm::vec3 gravity( 0.0f, -0.98f, 0.0f );
         GLfloat inv_mass = 0.1f;
-        if ((h == 0) && (w == 0)          ||
-            (h == 0) && (w == m_Width - 1)) {
-          inv_mass = 0.0f; //fix only edge point
-        }
+        // if ((h == 0) && (w == 0)          ||
+        //     (h == 0) && (w == m_Width - 1)) {
+        //   inv_mass = 0.0f; //fix only edge point
+        // }
         m_Particles[ h * m_Width + w ] = CParticle(inv_mass, pos, gravity);
       }
     }
@@ -221,8 +226,9 @@ public:
         }
       }
     }
+
   }
-  ~CCloth(){}
+  ~Cloth(){}
 
   void Render(){
     glBegin(GL_TRIANGLES);
@@ -252,7 +258,7 @@ public:
       for(particle = m_Particles.begin(); particle != m_Particles.end(); particle++){
         glm::vec3 vec    = (*particle).GetPosition() - ball->GetPosition();
         float     length = glm::length(vec);
-        float     radius = ball->GetRadius() * 1.8f; // fake radius
+        float     radius = ball->GetRadius(); // fake radius
         if (length < radius) {
           (*particle).AddPosition(glm::normalize(vec) * (radius - length));
         }
@@ -268,8 +274,8 @@ public:
 };
 
 CApplication g_Application;
-CCloth       g_Cloth(2.0f, 2.0f, 20, 20);
-CBall        g_Ball(0.1f);
+Cloth       g_Cloth(2.0f, 2.0f, 50, 50);
+CBall        g_Ball(0.6f);
 
 void render_string(std::string& str, int w, int h, int x0, int y0) {
   glDisable(GL_LIGHTING);
@@ -371,9 +377,12 @@ void idle(void){
   glutPostRedisplay();
 }
 
+void restart(){
+}
 void keyboard(unsigned char key , int x , int y){
   switch(key){
-  case 27: exit(0); break; // esc
+    case 27: exit(0); break; // esc
+    case '\n':restart();break;
   }
 }
 

@@ -241,6 +241,7 @@ public:
   }
 
   void Update(CApplication& app, float dt, CBall* ball, int iteraion){
+    static const float dh=0.05f;
     std::vector<CParticle>::iterator particle;
     for(particle = m_Particles.begin(); particle != m_Particles.end(); particle++){
       (*particle).Update(dt); // predict position
@@ -255,8 +256,8 @@ public:
         glm::vec3 vec    = (*particle).GetPosition() - ball->GetPosition();
         float     length = glm::length(vec);
         float     radius = ball->GetRadius(); // fake radius
-        if (length < radius) {
-          (*particle).AddPosition(glm::normalize(vec) * (radius - length));
+        if (length < radius+dh) {
+          (*particle).AddPosition(glm::normalize(vec) * (radius+dh - length));
         }
       }
       unsigned int before = glutGet(GLUT_ELAPSED_TIME);

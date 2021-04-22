@@ -271,7 +271,7 @@ public:
 };
 
 CApplication g_Application;
-Cloth       g_Cloth(2.0f, 2.0f, 50, 50);
+Cloth       g_Cloth(2.0f, 2.0f, 100, 100);
 CBall        g_Ball(0.6f);
 
 void render_string(std::string& str, int w, int h, int x0, int y0) {
@@ -362,13 +362,14 @@ void reshape(int width, int height){
 }
 
 void idle(void){
+  static const int SlowMotion=5.0f;
   GLfloat time = (float)glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
   GLfloat dt = time - g_Application.GetTime();
 
   dt = (dt > 0.033f) ? 0.033f : dt; // keep 30fps
 
-  g_Ball.Update(dt);
-  g_Cloth.Update(g_Application, dt, &g_Ball, g_Application.m_IterationNum);
+  g_Ball.Update(dt/SlowMotion);
+  g_Cloth.Update(g_Application, dt/SlowMotion, &g_Ball, g_Application.m_IterationNum);
 
   g_Application.SetTime(time);
   glutPostRedisplay();

@@ -199,10 +199,6 @@ public:
         );
         glm::vec3 gravity( 0.0f, -0.98f, 0.0f );
         GLfloat inv_mass = 0.1f;
-        // if ((h == 0) && (w == 0)          ||
-        //     (h == 0) && (w == m_Width - 1)) {
-        //   inv_mass = 0.0f; //fix only edge point
-        // }
         m_Particles[ h * m_Width + w ] = CParticle(inv_mass, pos, gravity);
       }
     }
@@ -298,8 +294,8 @@ void render_string(std::string& str, int w, int h, int x0, int y0) {
 }
 
 void init(int argc, char* argv[]){
-  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-  glEnable(GL_CULL_FACE);
+  glClearColor(0.7f, 0.7f, 0.7f, 1.0f);
+  // glEnable(GL_CULL_FACE);
 
   GLfloat time = (float)glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
   g_Application.SetTime(time);
@@ -340,7 +336,7 @@ void display(void){
 void reshape(int width, int height){
   static GLfloat lightPosition[4] = {0.0f,  2.5f,  5.5f, 1.0f};
   static GLfloat lightDiffuse[3]  = {1.0f,  1.0f,  1.0f      };
-  static GLfloat lightAmbient[3]  = {0.25f, 0.25f, 0.25f     };
+  static GLfloat lightAmbient[3]  = {0.75f, 0.75f, 0.75f     };
   static GLfloat lightSpecular[3] = {1.0f,  1.0f,  1.0f      };
 
   glEnable(GL_LIGHTING);
@@ -356,7 +352,7 @@ void reshape(int width, int height){
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
-  gluLookAt(0.0f, 00.0f, 5.0f, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0); // pos, tgt, up
+  gluLookAt(0.0f, 2.0f, 5.0f, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0); // pos, tgt, up
 
   glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
   glLightfv(GL_LIGHT0, GL_DIFFUSE,  lightDiffuse);
@@ -412,8 +408,8 @@ void special(int key, int x, int y){
 int main(int argc, char* argv[]) {
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
-  glutInitWindowSize(640, 480);
-  glutCreateWindow("XPBD: Position-Based Simulation of Compliant Constrained Dynamics");
+  glutInitWindowSize(800  , 600);
+  glutCreateWindow("Position-Based Dynamics");
 
   init(argc, argv);
 

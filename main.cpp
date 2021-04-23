@@ -11,14 +11,12 @@
 Plane plane;
 Ball ball;
 Cloth cloth(2.0f,2.0f,50,50,0.5f,0.0f);
-CApplication _main;
-
+float time;
 void init(int argc, char* argv[]){
   glClearColor(0.7f, 0.7f, 0.7f, 1.0f);
   // glEnable(GL_CULL_FACE);
 
-  GLfloat time = (float)glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
-  _main.SetTime(time);
+  time = (float)glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
 }
 
 void display(void){
@@ -65,15 +63,15 @@ void reshape(int width, int height){
 
 void idle(void){
   static const int SlowMotion=5.0f;
-  GLfloat time = (float)glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
-  GLfloat dt = time - _main.GetTime();
+  float t = (float)glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
+  float dt = t - time;
 
   dt = (dt > 0.033f) ? 0.033f : dt; // keep 30fps
 
   // cloth.step(0);
   cloth.step(dt/SlowMotion);
 
-  _main.SetTime(time);
+  time=t;
   glutPostRedisplay();
 }
 
@@ -84,28 +82,6 @@ void keyboard(unsigned char key , int x , int y){
   }
 }
 
-void special(int key, int x, int y){
-  if (key == GLUT_KEY_UP) {
-    _main.m_IterationNum++;
-  }
-  if (key == GLUT_KEY_DOWN) {
-    if (_main.m_IterationNum > 1){
-      _main.m_IterationNum--;
-    }
-  }
-  if (key == GLUT_KEY_LEFT) {
-    if (_main.m_Mode > eModePBD) {
-      _main.m_OldMode = _main.m_Mode;
-      _main.m_Mode--;
-    }
-  }
-  if (key == GLUT_KEY_RIGHT) {
-    if (_main.m_Mode < eModeMax - 1) {
-      _main.m_OldMode = _main.m_Mode;
-      _main.m_Mode++;
-    }
-  }
-}
 
 int main(int argc, char* argv[]) {
   glutInit(&argc, argv);
@@ -119,7 +95,6 @@ int main(int argc, char* argv[]) {
   glutReshapeFunc(reshape);
   glutIdleFunc(idle);
   glutKeyboardFunc(keyboard);
-  glutSpecialFunc(special);
 
   glutMainLoop();
   return 0;

@@ -1,56 +1,6 @@
 #include <glm/glm.hpp>
 #include <GL/glut.h>
 #include <vector>
-enum eMode {
-  eModePBD,
-  eModeXPBD_Concrete,
-  eModeXPBD_Wood,
-  eModeXPBD_Leather,
-  eModeXPBD_Tendon,
-  eModeXPBD_Rubber,
-  eModeXPBD_Muscle,
-  eModeXPBD_Fat,
-  eModeMax,
-};
-
-static const char* MODE_STRING[eModeMax] = {
-  "PBD",
-  "XPBD(Concrete)",
-  "XPBD(Wood)",
-  "XPBD(Leather)",
-  "XPBD(Tendon)",
-  "XPBD(Rubber)",
-  "XPBD(Muscle)",
-  "XPBD(Fat)",
-};
-
-static const float MODE_COMPLIANCE[eModeMax] = {
-  0.0f,            // Miles Macklin's blog (http://blog.mmacklin.com/2016/10/12/xpbd-slides-and-stiffness/)
-  0.00000000004f, // 0.04 x 10^(-9) (M^2/N) Concrete
-  0.00000000016f, // 0.16 x 10^(-9) (M^2/N) Wood
-  0.000000001f,   // 1.0  x 10^(-8) (M^2/N) Leather
-  0.000000002f,   // 0.2  x 10^(-7) (M^2/N) Tendon
-  0.0000001f,     // 1.0  x 10^(-6) (M^2/N) Rubber
-  0.00002f,       // 0.2  x 10^(-3) (M^2/N) Muscle
-  0.0001f,        // 1.0  x 10^(-3) (M^2/N) Fat
-};
-
-class CApplication{
-private:
-  float m_Time;
-  int   m_SolveTime;
-public:
-  int   m_IterationNum;
-  int   m_Mode;
-  int   m_OldMode;
-  CApplication() :
-  m_Time(0.0f), m_SolveTime(0), m_IterationNum(20), m_Mode(eModePBD), m_OldMode(eModeMax){}
-
-  float GetTime(){ return m_Time; }
-  void  SetTime(float time){ m_Time = time; }
-  int   GetSolveTime(){ return m_SolveTime; }
-  void  SetSolveTime(float time){ m_SolveTime = time; }
-};
 struct Particle{
   float w;    // 1/mass
   glm::vec3 pos,acc,v,tmp;
@@ -139,7 +89,6 @@ struct Plane{
 // global variables
 #ifdef _MAIN
 #else
-extern CApplication _main;
 extern Ball ball;
 extern Cloth cloth;
 #endif

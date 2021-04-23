@@ -63,17 +63,17 @@ struct Particle{
 };
 struct Constrain{
   std::vector<Particle*> m;
-  float kbend,kstretch,len_slack;
+  float k,len_slack;
   Constrain(Particle &m1){
     m.push_back(&m1);
   }
   Constrain(Particle &m1,Particle &m2,float kstretch=1.0f)
-  :kstretch(kstretch),len_slack(glm::length(m1.pos-m2.pos)){
+  :k(kstretch),len_slack(glm::length(m1.pos-m2.pos)){
     m.push_back(&m1);
     m.push_back(&m2);
   }
   Constrain(Particle &m1,Particle &m2,Particle &m3,Particle &m4,float kbend=1.0f)
-  :kbend(kbend){
+  :k(kbend){
     m.push_back(&m1);
     m.push_back(&m2);
     m.push_back(&m3);
@@ -82,15 +82,15 @@ struct Constrain{
   void solve();
 };
 struct Cloth{
-  float x,y,k;
+  float x,y,kbend,kstretch;
   static const int iterations=20;
   int slicex,slicey,gerneric_constrains_cnt;
 
   std::vector<Constrain> constrains;
   std::vector<Particle> particles;
   
-  Cloth(float x,float y,int slicex,int slicey,float k=1.0f):
-  x(x),y(y),slicex(slicex),slicey(slicey),k(k){
+  Cloth(float x,float y,int slicex,int slicey,float kstretch=1.0f,float kbend=0.0f):
+  x(x),y(y),slicex(slicex),slicey(slicey),kstretch(kstretch),kbend(kbend){
     particles.resize(slicex*slicey);
     reset();
     gen();
@@ -138,10 +138,6 @@ struct Plane{
 };
 // global variables
 #ifdef _MAIN
-Plane plane;
-Ball ball;
-Cloth cloth(2.0f,2.0f,50,50);
-CApplication _main;
 #else
 extern CApplication _main;
 extern Ball ball;

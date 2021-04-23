@@ -8,7 +8,10 @@
 #include <glm/glm.hpp>
 #define _MAIN
 #include "global.h"
-
+Plane plane;
+Ball ball;
+Cloth cloth(2.0f,2.0f,50,50,0.5f,0.0f);
+CApplication _main;
 
 void init(int argc, char* argv[]){
   glClearColor(0.7f, 0.7f, 0.7f, 1.0f);

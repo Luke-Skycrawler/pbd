@@ -15,11 +15,13 @@ void Cloth::gen(){
   for(int i=0;i<slicex;i++)
     for(int j=0;j<slicey;j++){
       // stretch constrains
-      if(i<slicex-1)    constrains.push_back(Constrain(GetParticle(i,j),GetParticle(i+1,j),k));
-      if(j<slicey-1)    constrains.push_back(Constrain(GetParticle(i,j),GetParticle(i,j+1),k));
-      if(i&&j<slicey-1) constrains.push_back(Constrain(GetParticle(i,j),GetParticle(i-1,j+1),k));
+      if(i<slicex-1)    constrains.push_back(Constrain(GetParticle(i,j),GetParticle(i+1,j),kstretch));
+      if(j<slicey-1)    constrains.push_back(Constrain(GetParticle(i,j),GetParticle(i,j+1),kstretch));
+      if(i&&j<slicey-1) constrains.push_back(Constrain(GetParticle(i,j),GetParticle(i-1,j+1),kstretch));
       // TODO: bend constrains
-      
+      if(i<slicex-1&&j) constrains.push_back(Constrain(GetParticle(i,j),GetParticle(i+1,j-1),kbend));
+      if(i<slicex-2)    constrains.push_back(Constrain(GetParticle(i,j),GetParticle(i+2,j),kbend));
+      if(j<slicex-2)    constrains.push_back(Constrain(GetParticle(i,j),GetParticle(i,j+2),kbend));
       // collision constrains
       constrains.push_back(Constrain(particles[i*slicey+j]));
     }
@@ -80,8 +82,8 @@ void Constrain::solve(){
       vec3 p10=m[0]->tmp-m[1]->tmp;
       l=length(p10);
       float C0=m[0]->w/(m[0]->w+m[1]->w),C1=1.0f-C0;
-      m[0]->tmp+=C0*kstretch*(len_slack-l)*(p10)/l;
-      m[1]->tmp-=C1*kstretch*(len_slack-l)*(p10)/l;
+      m[0]->tmp+=C0*k*(len_slack-l)*(p10)/l;
+      m[1]->tmp-=C1*k*(len_slack-l)*(p10)/l;
       break;
     // case 4:
   }

@@ -67,7 +67,8 @@ void idle(void){
 
   dt = (dt > 0.033f) ? 0.033f : dt; // keep 30fps
 
-  // cloth.step(dt/SlowMotion);
+  // cloth.step(0);
+  cloth.step(dt/SlowMotion);
 
   _main.SetTime(time);
   glutPostRedisplay();

@@ -56,7 +56,7 @@ struct Particle{
   glm::vec3 pos,acc,v,tmp;
   // bool v_updated;
   Particle(glm::vec3 pos,glm::vec3 gravity,float w)
-  :w(w),v(0.0f,0.0f,0.0f),pos(pos),acc(gravity){}
+  :w(w),v(0.0f),pos(pos),acc(gravity){}
   Particle():w(w),v(0.0f),pos(0.0f),acc(0.0f){}
 };
 struct Constrain{
@@ -79,7 +79,6 @@ struct Constrain{
   }
   void solve();
 };
-static const float dh=0.005f;
 struct Cloth{
   float x,y,k;
   static const int iterations=20;
@@ -92,22 +91,10 @@ struct Cloth{
   x(x),y(y),slicex(slicex),slicey(slicey),k(k){
     particles.resize(slicex*slicey);
     reset();
+    gen();
   }
-  void reset(){
-    glm::vec3 g(0.0f,-0.98f,0.0f);
-    float w=0.1f;
-    for(int i=0;i<slicex;i++)
-      for(int j=0;j<slicey;j++){
-        glm::vec3 t(i*x/slicex-0.5f*x,0.7f,-j*y/slicey+0.5f*y);
-        particles[i*slicey+j]=Particle(t,g,w);
-        // stretch constrains
-        if(i<slicex-1)    constrains.push_back(Constrain(GetParticle(i,j),GetParticle(i+1,j)));
-        if(j<slicey-1)    constrains.push_back(Constrain(GetParticle(i,j),GetParticle(i,j+1)));
-        if(i&&j<slicey-1) constrains.push_back(Constrain(GetParticle(i,j),GetParticle(i-1,j+1)));
-        // TODO: bend constrains
-        
-      }
-  }
+  void gen();
+  void reset();
   void draw();
   void step(float dt);
   private:
@@ -137,12 +124,10 @@ struct Ball{
 
 // global variables
 #ifdef _MAIN
-float r;
 Ball ball;
 Cloth cloth(2.0f,2.0f,50,50);
 CApplication _main;
 #else
-extern float r;
 extern CApplication _main;
 extern Ball ball;
 extern Cloth cloth;

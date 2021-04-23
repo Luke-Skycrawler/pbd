@@ -6,273 +6,8 @@
 #include <vector>
 #include <string>
 #include <glm/glm.hpp>
-
-enum eMode {
-  eModePBD,
-  eModeXPBD_Concrete,
-  eModeXPBD_Wood,
-  eModeXPBD_Leather,
-  eModeXPBD_Tendon,
-  eModeXPBD_Rubber,
-  eModeXPBD_Muscle,
-  eModeXPBD_Fat,
-  eModeMax,
-};
-
-static const char* MODE_STRING[eModeMax] = {
-  "PBD",
-  "XPBD(Concrete)",
-  "XPBD(Wood)",
-  "XPBD(Leather)",
-  "XPBD(Tendon)",
-  "XPBD(Rubber)",
-  "XPBD(Muscle)",
-  "XPBD(Fat)",
-};
-
-static const float MODE_COMPLIANCE[eModeMax] = {
-  0.0f,            // Miles Macklin's blog (http://blog.mmacklin.com/2016/10/12/xpbd-slides-and-stiffness/)
-  0.00000000004f, // 0.04 x 10^(-9) (M^2/N) Concrete
-  0.00000000016f, // 0.16 x 10^(-9) (M^2/N) Wood
-  0.000000001f,   // 1.0  x 10^(-8) (M^2/N) Leather
-  0.000000002f,   // 0.2  x 10^(-7) (M^2/N) Tendon
-  0.0000001f,     // 1.0  x 10^(-6) (M^2/N) Rubber
-  0.00002f,       // 0.2  x 10^(-3) (M^2/N) Muscle
-  0.0001f,        // 1.0  x 10^(-3) (M^2/N) Fat
-};
-
-class CParticle{
- public:
-  GLfloat   m_InvMass;
-  glm::vec3 m_Position;
-  glm::vec3 m_OldPosition;
-  glm::vec3 m_Acceleration;
-
-public:
-  CParticle(GLfloat inv_mass, glm::vec3& position, glm::vec3& acceleration) :
-  m_InvMass(inv_mass),
-  m_Position(position),
-  m_OldPosition(position),
-  m_Acceleration(acceleration){}
-  CParticle(){};
-  ~CParticle(){}
-
-  void       Update(float t){
-    if (m_InvMass > 0.0f){
-      glm::vec3 tmp = m_Position;
-      m_Position += (m_Position - m_OldPosition) + m_Acceleration * t * t;
-      m_OldPosition = tmp;
-    }
-  }
-  glm::vec3& GetPosition()  { return m_Position; }
-  GLfloat&   GetInvMass()   { return m_InvMass;  }
-  void       AddPosition(const glm::vec3& pos, bool is_force = true){
-    if ((m_InvMass > 0.0f) || (is_force)) {
-      m_Position += pos;
-    }
-  }
-};
-
-class CApplication{
-private:
-  float m_Time;
-  int   m_SolveTime;
-public:
-  int   m_IterationNum;
-  int   m_Mode;
-  int   m_OldMode;
-  CApplication() :
-  m_Time(0.0f), m_SolveTime(0), m_IterationNum(20), m_Mode(eModePBD), m_OldMode(eModeMax){}
-
-  float GetTime(){ return m_Time; }
-  void  SetTime(float time){ m_Time = time; }
-  int   GetSolveTime(){ return m_SolveTime; }
-  void  SetSolveTime(float time){ m_SolveTime = time; }
-};
-
-class CConstraint{
-private:
-  GLfloat    m_RestLength;
-  CParticle* m_Particle1;
-  CParticle* m_Particle2;
-  GLfloat    m_Stiffness;   // for  PBD(0.0f-1.0f)
-  GLfloat    m_Compliance;  // for XPBD
-  GLfloat    m_Lambda;      // for XPBD
-public:
-  CConstraint(CParticle* p0, CParticle* p1) :
-  m_RestLength(0.0f),
-  m_Particle1(p0),
-  m_Particle2(p1),
-  m_Stiffness(0.1f),
-  m_Compliance(0.0f),
-  m_Lambda(0.0f) {
-    glm::vec3 p0_to_p1 = m_Particle2->GetPosition() - m_Particle1->GetPosition();
-    m_RestLength = glm::length(p0_to_p1);
-  }
-
-  void LambdaInit() {
-    m_Lambda = 0.0f; // reset every time frame
-  }
-  void Solve(CApplication& app, float dt){
-    GLfloat   inv_mass1         = m_Particle1->GetInvMass();
-    GLfloat   inv_mass2         = m_Particle2->GetInvMass();
-    GLfloat   sum_mass          = inv_mass1 + inv_mass2;
-    if (sum_mass == 0.0f) { return; }
-    glm::vec3 p1_minus_p2       = m_Particle1->GetPosition() - m_Particle2->GetPosition();
-    GLfloat   distance          = glm::length(p1_minus_p2);
-    GLfloat   constraint        = distance - m_RestLength; // Cj(x)
-    glm::vec3 correction_vector;
-    if (app.m_Mode != eModePBD) { // XPBD
-      m_Compliance = MODE_COMPLIANCE[app.m_Mode];
-      m_Compliance /= dt * dt;    // a~
-      GLfloat dlambda           = (-constraint - m_Compliance * m_Lambda) / (sum_mass + m_Compliance); // eq.18
-              correction_vector = dlambda * p1_minus_p2 / (distance + FLT_EPSILON);                    // eq.17
-      m_Lambda += dlambda;
-    } else {                      // normal PBD
-              correction_vector = m_Stiffness * glm::normalize(p1_minus_p2) * -constraint/ sum_mass;   // eq. 1
-    }
-    m_Particle1->AddPosition(+inv_mass1 * correction_vector);
-    m_Particle2->AddPosition(-inv_mass2 * correction_vector);
-  }
-};
-
-class CBall{
-public:
-  float     m_Frequency;
-  glm::vec3 m_Position;
-  float     m_Radius;
-
-public:
-  CBall(float radius) :
-    m_Frequency(3.14f * 0.4f),
-    m_Position(0.0f,0.0f,0.0f),
-    m_Radius(radius){}
-
-  void Update(float dt){
-    // m_Position.z = cos(m_Frequency) * 2.0f;
-    // m_Frequency += dt / 5.0f;
-    // if (m_Frequency > 3.14f * 2.0f){ m_Frequency -= 3.14f * 2.0f; }
-  }
-
-  void Render(){
-    glTranslatef(m_Position.x, m_Position.y, m_Position.z);
-    static const glm::vec3 color(0.4f, 0.4f, 0.8f);
-    glColor3fv((GLfloat*)&color);
-    glutSolidSphere(m_Radius, 30, 30);
-  }
-
-  glm::vec3& GetPosition(){ return m_Position; }
-  float      GetRadius()  { return m_Radius;   }
-};
-
-class Cloth{
-private:
-  int                      m_Width;
-  int                      m_Height;
-  std::vector<CParticle>   m_Particles;
-  std::vector<CConstraint> m_Constraints;
-  
-  CParticle* GetParticle(int w, int h) {return &m_Particles[ h * m_Width + w ];}
-  void       MakeConstraint(CParticle* p1, CParticle* p2) { m_Constraints.push_back(CConstraint(p1, p2));}
-
-  void DrawTriangle(CParticle* p1, CParticle* p2, CParticle* p3, const glm::vec3 color){
-    glColor3fv((GLfloat*)&color);
-    glVertex3fv((GLfloat*)&(p1->GetPosition()));
-    glVertex3fv((GLfloat*)&(p2->GetPosition()));
-    glVertex3fv((GLfloat*)&(p3->GetPosition()));
-  }
-
-public:
-  Cloth(float width, float height, int num_width, int num_height):
-  m_Width(num_height),
-  m_Height(num_height) {
-    reset(width,height);
-  }
-  void reset(float width=2.0f,float height=2.0f){
-    m_Particles.resize(m_Width * m_Height);
-    for(int w = 0; w < m_Width; w++){
-      for(int h = 0; h < m_Height; h++){
-        glm::vec3 pos( 
-          width  * ((float)w/(float)m_Width ) - width  * 0.5f,
-          0.81f, 
-          height * ((float)h/(float)m_Height) - height * 0.5f
-        );
-        glm::vec3 gravity( 0.0f, -0.98f, 0.0f );
-        GLfloat inv_mass = 0.1f;
-        m_Particles[ h * m_Width + w ] = CParticle(inv_mass, pos, gravity);
-      }
-    }
-    for(int w = 0; w < m_Width; w++){
-      for(int h = 0; h < m_Height; h++){           // structual constraint
-        if (w < m_Width  - 1){ MakeConstraint(GetParticle(w, h), GetParticle(w+1, h  )); }
-        if (h < m_Height - 1){ MakeConstraint(GetParticle(w, h), GetParticle(w,   h+1)); }
-        if (w < m_Width  - 1 && h < m_Height - 1){ // shear constraint
-          MakeConstraint(GetParticle(w,   h), GetParticle(w+1, h+1));
-          MakeConstraint(GetParticle(w+1, h), GetParticle(w,   h+1));
-        }
-      }
-    }
-    for(int w = 0; w < m_Width; w++){
-      for(int h = 0; h < m_Height; h++){           // bend constraint
-        if (w < m_Width  - 2){ MakeConstraint(GetParticle(w, h), GetParticle(w+2, h  )); }
-        if (h < m_Height - 2){ MakeConstraint(GetParticle(w, h), GetParticle(w,   h+2)); }
-        if (w < m_Width  - 2 && h < m_Height - 2){
-          MakeConstraint(GetParticle(w,   h), GetParticle(w+2, h+2));
-          MakeConstraint(GetParticle(w+2, h), GetParticle(w,   h+2));
-        }
-      }
-    }
-
-  }
-  ~Cloth(){}
-
-  void Render(){
-    glBegin(GL_TRIANGLES);
-    int col_idx = 0;
-    for(int w = 0; w < m_Width - 1; w++){
-      for(int h = 0; h < m_Height - 1; h++){
-        glm::vec3 col(1.0f, 0.6f, 0.6f);
-        if ( col_idx++ % 2 ){ col = glm::vec3(1.0f, 1.0f, 1.0f);}
-        DrawTriangle(GetParticle(w+1,h  ), GetParticle(w,   h), GetParticle(w, h+1), col);
-        DrawTriangle(GetParticle(w+1,h+1), GetParticle(w+1, h), GetParticle(w, h+1), col);
-      }
-    }
-    glEnd();
-  }
-
-  void Update(CApplication& app, float dt, CBall* ball, int iteraion){
-    static const float dh=0.05f;
-    std::vector<CParticle>::iterator particle;
-    for(particle = m_Particles.begin(); particle != m_Particles.end(); particle++){
-      (*particle).Update(dt); // predict position
-    }
-    unsigned int  solve_time_ms = 0;
-	std::vector<CConstraint>::iterator constraint;
-    for(constraint = m_Constraints.begin(); constraint != m_Constraints.end(); constraint++){
-      (*constraint).LambdaInit();
-    }
-    for(int i = 0; i < iteraion; i++){
-      for(particle = m_Particles.begin(); particle != m_Particles.end(); particle++){
-        glm::vec3 vec    = (*particle).GetPosition() - ball->GetPosition();
-        float     length = glm::length(vec);
-        float     radius = ball->GetRadius(); // fake radius
-        if (length < radius+dh) {
-          (*particle).AddPosition(glm::normalize(vec) * (radius+dh - length));
-        }
-      }
-      unsigned int before = glutGet(GLUT_ELAPSED_TIME);
-      for(constraint = m_Constraints.begin(); constraint != m_Constraints.end(); constraint++){
-        (*constraint).Solve(app, dt);
-      }
-      solve_time_ms += glutGet(GLUT_ELAPSED_TIME) - before;
-    }
-    app.SetSolveTime(solve_time_ms);
-  }
-};
-
-CApplication g_Application;
-Cloth       g_Cloth(2.0f, 2.0f, 100, 100);
-CBall        g_Ball(0.6f);
+#define _MAIN
+#include "global.h"
 
 void render_string(std::string& str, int w, int h, int x0, int y0) {
   glDisable(GL_LIGHTING);
@@ -299,7 +34,7 @@ void init(int argc, char* argv[]){
   // glEnable(GL_CULL_FACE);
 
   GLfloat time = (float)glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
-  g_Application.SetTime(time);
+  _main.SetTime(time);
 }
 
 void display(void){
@@ -312,22 +47,22 @@ void display(void){
   glEnable(GL_NORMALIZE);
 
   glPushMatrix();
-    g_Cloth.Render();
+  cloth.draw();
   glPopMatrix();
 
   glPushMatrix();
-    g_Ball.Render();
+  ball.draw();
   glPopMatrix();
 
   glColor3d(1.0f, 1.0f, 1.0f);
   char debug[128];
-  sprintf(debug, "ITERATION %d", g_Application.m_IterationNum);
+  sprintf(debug, "ITERATION %d", _main.m_IterationNum);
   std::string iteration_text(debug);
   render_string(iteration_text, glutGet(GLUT_WINDOW_WIDTH), glutGet(GLUT_WINDOW_HEIGHT), 10, 20);
-  sprintf(debug, "%s", MODE_STRING[g_Application.m_Mode]);
+  sprintf(debug, "%s", MODE_STRING[_main.m_Mode]);
   std::string mode_text(debug);
   render_string(mode_text, glutGet(GLUT_WINDOW_WIDTH), glutGet(GLUT_WINDOW_HEIGHT), 10, 40);
-  sprintf(debug, "TIME %d(ms)", g_Application.GetSolveTime());
+  sprintf(debug, "TIME %d(ms)", _main.GetSolveTime());
   std::string time_text(debug);
   render_string(time_text, glutGet(GLUT_WINDOW_WIDTH), glutGet(GLUT_WINDOW_HEIGHT), 10, 60);
 
@@ -364,14 +99,13 @@ void reshape(int width, int height){
 void idle(void){
   static const int SlowMotion=5.0f;
   GLfloat time = (float)glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
-  GLfloat dt = time - g_Application.GetTime();
+  GLfloat dt = time - _main.GetTime();
 
   dt = (dt > 0.033f) ? 0.033f : dt; // keep 30fps
 
-  g_Ball.Update(dt/SlowMotion);
-  g_Cloth.Update(g_Application, dt/SlowMotion, &g_Ball, g_Application.m_IterationNum);
+  cloth.step(dt/SlowMotion);
 
-  g_Application.SetTime(time);
+  _main.SetTime(time);
   glutPostRedisplay();
 }
 
@@ -386,23 +120,23 @@ void keyboard(unsigned char key , int x , int y){
 
 void special(int key, int x, int y){
   if (key == GLUT_KEY_UP) {
-    g_Application.m_IterationNum++;
+    _main.m_IterationNum++;
   }
   if (key == GLUT_KEY_DOWN) {
-    if (g_Application.m_IterationNum > 1){
-      g_Application.m_IterationNum--;
+    if (_main.m_IterationNum > 1){
+      _main.m_IterationNum--;
     }
   }
   if (key == GLUT_KEY_LEFT) {
-    if (g_Application.m_Mode > eModePBD) {
-      g_Application.m_OldMode = g_Application.m_Mode;
-      g_Application.m_Mode--;
+    if (_main.m_Mode > eModePBD) {
+      _main.m_OldMode = _main.m_Mode;
+      _main.m_Mode--;
     }
   }
   if (key == GLUT_KEY_RIGHT) {
-    if (g_Application.m_Mode < eModeMax - 1) {
-      g_Application.m_OldMode = g_Application.m_Mode;
-      g_Application.m_Mode++;
+    if (_main.m_Mode < eModeMax - 1) {
+      _main.m_OldMode = _main.m_Mode;
+      _main.m_Mode++;
     }
   }
 }

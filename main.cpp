@@ -9,25 +9,6 @@
 #define _MAIN
 #include "global.h"
 
-void render_string(std::string& str, int w, int h, int x0, int y0) {
-  glDisable(GL_LIGHTING);
-  glMatrixMode(GL_PROJECTION);
-  glPushMatrix();
-  glLoadIdentity();
-  gluOrtho2D(0, w, h, 0);
-  glMatrixMode(GL_MODELVIEW);
-  glPushMatrix();
-  glLoadIdentity();
-  glRasterPos2f(x0, y0);
-  int size = (int)str.size();
-  for(int i = 0; i < size; ++i){
-    glutBitmapCharacter(GLUT_BITMAP_9_BY_15, str[i]);
-  }
-  glPopMatrix();
-  glMatrixMode(GL_PROJECTION);
-  glPopMatrix();
-  glMatrixMode(GL_MODELVIEW);
-}
 
 void init(int argc, char* argv[]){
   glClearColor(0.7f, 0.7f, 0.7f, 1.0f);
@@ -46,25 +27,8 @@ void display(void){
   glEnable(GL_COLOR_MATERIAL);
   glEnable(GL_NORMALIZE);
 
-  glPushMatrix();
-  cloth.draw();
-  glPopMatrix();
-
-  glPushMatrix();
   ball.draw();
-  glPopMatrix();
-
-  glColor3d(1.0f, 1.0f, 1.0f);
-  char debug[128];
-  sprintf(debug, "ITERATION %d", _main.m_IterationNum);
-  std::string iteration_text(debug);
-  render_string(iteration_text, glutGet(GLUT_WINDOW_WIDTH), glutGet(GLUT_WINDOW_HEIGHT), 10, 20);
-  sprintf(debug, "%s", MODE_STRING[_main.m_Mode]);
-  std::string mode_text(debug);
-  render_string(mode_text, glutGet(GLUT_WINDOW_WIDTH), glutGet(GLUT_WINDOW_HEIGHT), 10, 40);
-  sprintf(debug, "TIME %d(ms)", _main.GetSolveTime());
-  std::string time_text(debug);
-  render_string(time_text, glutGet(GLUT_WINDOW_WIDTH), glutGet(GLUT_WINDOW_HEIGHT), 10, 60);
+  cloth.draw();
 
   glutSwapBuffers();
 }
@@ -103,7 +67,7 @@ void idle(void){
 
   dt = (dt > 0.033f) ? 0.033f : dt; // keep 30fps
 
-  cloth.step(dt/SlowMotion);
+  // cloth.step(dt/SlowMotion);
 
   _main.SetTime(time);
   glutPostRedisplay();

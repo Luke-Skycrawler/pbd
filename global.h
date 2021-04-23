@@ -1,6 +1,16 @@
 #include <glm/glm.hpp>
 #include <GL/glut.h>
 #include <vector>
+struct Ball{
+  float radius;
+  Ball(float radius=0.6f):radius(radius){}
+  static const glm::vec3 color;
+  void draw(glm::vec3 pos=glm::vec3(0.0f)){
+    glTranslatef(pos.x,pos.y,pos.z);
+    glColor3fv((float*)&color);
+    glutSolidSphere(radius,30,30);
+  }
+};
 struct Particle{
   float w;    // 1/mass
   glm::vec3 pos,acc,v,tmp;
@@ -9,38 +19,49 @@ struct Particle{
   :w(w),v(0.0f),pos(pos),acc(gravity){}
   Particle():w(w),v(0.0f),pos(0.0f),acc(0.0f){}
   bool collision[2];
+  // FIXME: only for convenience, attributed to Constrain
   void prelaunch(){collision[0]=collision[1]=false;}
+};
+
+struct Ball_Dynamic : Particle{
+  Ball ball;
+  Ball_Dynamic(float radius,glm::vec3 pos,glm::vec3 acc,float w)
+  :ball(radius),Particle(pos,acc,w){
+    
+  }
+  void draw(){ball.draw(pos);}
 };
 struct Constrain{
   std::vector<Particle*> m;
+  Particle * ext_obj;
   float k,len_slack;
-  Constrain(Particle &m1){
+  Constrain(Particle &m1):ext_obj(NULL){
     m.push_back(&m1);
   }
   Constrain(Particle &m1,Particle &m2,float kstretch=1.0f)
-  :k(kstretch),len_slack(glm::length(m1.pos-m2.pos)){
+  :k(kstretch),len_slack(glm::length(m1.pos-m2.pos)),ext_obj(NULL){
     m.push_back(&m1);
     m.push_back(&m2);
   }
-  Constrain(Particle &m1,Particle &m2,Particle &m3,Particle &m4,float kbend=1.0f)
-  :k(kbend){
-    m.push_back(&m1);
-    m.push_back(&m2);
-    m.push_back(&m3);
-    m.push_back(&m4);
-  }
+  // Constrain(Particle &m1,Particle &m2,Particle &m3,Particle &m4,float kbend=1.0f)
+  // :k(kbend){
+  //   m.push_back(&m1);
+  //   m.push_back(&m2);
+  //   m.push_back(&m3);
+  //   m.push_back(&m4);
+  // }
   void solve();
 };
 struct Cloth{
   float x,y,kbend,kstretch;
-  static const int iterations=20;
+  static const int iterations=100;
   int slicex,slicey,gerneric_constrains_cnt;
 
   std::vector<Constrain> constrains;
   std::vector<Particle> particles;
-  
-  Cloth(float x,float y,int slicex,int slicey,float kstretch=1.0f,float kbend=0.0f):
-  x(x),y(y),slicex(slicex),slicey(slicey),kstretch(kstretch),kbend(kbend){
+  bool pinned;
+  Cloth(float x,float y,int slicex,int slicey,float kstretch=1.0f,float kbend=0.0f,bool pinned=false):
+  x(x),y(y),slicex(slicex),slicey(slicey),kstretch(kstretch),kbend(kbend),pinned(pinned){
     particles.resize(slicex*slicey);
     reset();
     gen();
@@ -64,15 +85,7 @@ struct Cloth{
     return particles[i*slicey+j];
   }
 };
-struct Ball{
-  float radius;
-  Ball(float radius=0.6f):radius(radius),color(0.4f,0.4f,0.8f){}
-  const glm::vec3 color;
-  void draw(){
-    glColor3fv((float*)&color);
-    glutSolidSphere(radius,30,30);
-  }
-};
+
 struct Plane{
   Plane(float w=5.0f):w(w){}
   const float w;
@@ -89,6 +102,6 @@ struct Plane{
 // global variables
 #ifdef _MAIN
 #else
-extern Ball ball;
+extern Ball_Dynamic ball;
 extern Cloth cloth;
 #endif

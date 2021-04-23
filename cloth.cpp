@@ -2,14 +2,24 @@
 #include <GL/glut.h>
 using namespace std;
 using namespace glm;
+static const glm::vec3 g(0.0f,-0.98f,0.0f);
 void Cloth::reset(){
-  glm::vec3 g(0.0f,-0.98f,0.0f);
   float w=0.1f;
   for(int i=0;i<slicex;i++)
     for(int j=0;j<slicey;j++){
       glm::vec3 t(i*x/slicex-0.5f*x,0.7f,-j*y/slicey+0.5f*y);
       particles[i*slicey+j]=Particle(t,g,w);
     }
+  if(pinned){
+    GetParticle(0,0).               w=0.0f;
+    GetParticle(0,slicey-1).        w=0.0f;
+    GetParticle(slicex-1,0).        w=0.0f;
+    GetParticle(slicex-1,slicey-1). w=0.0f;
+    GetParticle(0,0).               acc=vec3(0.0f);
+    GetParticle(0,slicey-1).        acc=vec3(0.0f);
+    GetParticle(slicex-1,0).        acc=vec3(0.0f);
+    GetParticle(slicex-1,slicey-1). acc=vec3(0.0f);
+  }
 }
 void Cloth::gen(){
   for(int i=0;i<slicex;i++)
@@ -63,7 +73,7 @@ void Cloth::step(float dt){
 }
 void Constrain::solve(){
   float l;
-  static float r=ball.radius;
+  static float r=ball.ball.radius;
   static const float dh=0.02f;
   // to reduce artifacts
   switch(m.size()){
@@ -88,3 +98,4 @@ void Constrain::solve(){
     // case 4:
   }
 }
+const vec3 Ball::color(0.4f,0.4f,0.8f);

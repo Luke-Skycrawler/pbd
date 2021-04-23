@@ -8,9 +8,10 @@
 #include <glm/glm.hpp>
 #define _MAIN
 #include "global.h"
+using namespace glm;
 Plane plane;
-Ball ball;
-Cloth cloth(2.0f,2.0f,50,50,0.5f,0.0f);
+Ball_Dynamic ball(0.6f,vec3(0.0f),vec3(0.0f),0.0f);
+Cloth cloth(2.0f,2.0f,50,50,1.0f,0.0f,true);
 float time;
 void init(int argc, char* argv[]){
   glClearColor(0.7f, 0.7f, 0.7f, 1.0f);

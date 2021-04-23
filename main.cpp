@@ -26,7 +26,7 @@ void display(void){
   glDepthFunc(GL_LESS); 
   glEnable(GL_COLOR_MATERIAL);
   glEnable(GL_NORMALIZE);
-
+  plane.draw();
   ball.draw();
   cloth.draw();
 
@@ -74,12 +74,10 @@ void idle(void){
   glutPostRedisplay();
 }
 
-void restart(){
-}
 void keyboard(unsigned char key , int x , int y){
   switch(key){
     case 27: exit(0); break; // esc
-    case '\n':restart();break;
+    case 'r':case'R':cloth.reset();break;
   }
 }
 

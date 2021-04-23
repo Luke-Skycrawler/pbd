@@ -58,6 +58,8 @@ struct Particle{
   Particle(glm::vec3 pos,glm::vec3 gravity,float w)
   :w(w),v(0.0f),pos(pos),acc(gravity){}
   Particle():w(w),v(0.0f),pos(0.0f),acc(0.0f){}
+  bool collision[2];
+  void prelaunch(){collision[0]=collision[1]=false;}
 };
 struct Constrain{
   std::vector<Particle*> m;
@@ -121,9 +123,22 @@ struct Ball{
     glutSolidSphere(radius,30,30);
   }
 };
-
+struct Plane{
+  Plane(float w=5.0f):w(w){}
+  const float w;
+  void draw(){
+    glColor3f(0.7f,0.7f,0.7f);
+    glBegin(GL_TRIANGLE_STRIP);
+    glVertex3f(-w,0.0f, w);
+    glVertex3f( w,0.0f, w);
+    glVertex3f(-w,0.0f,-w);
+    glVertex3f( w,0.0f,-w);
+    glEnd();
+  }
+};
 // global variables
 #ifdef _MAIN
+Plane plane;
 Ball ball;
 Cloth cloth(2.0f,2.0f,50,50);
 CApplication _main;

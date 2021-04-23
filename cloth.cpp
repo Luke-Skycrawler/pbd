@@ -41,6 +41,7 @@ void Cloth::step(float dt){
     it->v+=dt*it->acc;
     // damp(it->v);
     it->tmp=it->pos+dt*it->v;
+    it->prelaunch();
     // if(length(it->tmp)<r+dh)
     //   constrains.push_back(Constrain(*it));
   }
@@ -51,16 +52,12 @@ void Cloth::step(float dt){
   }
   for(auto it=particles.begin();it!=particles.end();it++){
     it->v=(it->tmp-it->pos)/dt;
+    // collision set velocity to 0  
+    if(it->collision[0])it->v-=it->tmp*(it->v*it->tmp);
+    if(it->collision[1])it->v.y=0.0f;
     it->pos=it->tmp;
     // it->v_updated=false;
-  }
-  // collision set velocity to 0  
-  // for(int i=gerneric_constrains_cnt;i<constrains.size();i++){
-  //   constrains[i].m[0]->v=vec3(0.0f);
-  // }
-  
-  // cancel the collision constrains
-  // constrains.resize(gerneric_constrains_cnt);
+  }  
 }
 void Constrain::solve(){
   float l;
@@ -72,6 +69,11 @@ void Constrain::solve(){
       l=length(m[0]->tmp);
       if(l<r+dh){
         m[0]->tmp+=m[0]->tmp*(r+dh-l)/l;
+        m[0]->collision[0]=true;
+      }
+      if(m[0]->tmp.y<dh){
+        m[0]->tmp.y=dh;
+        m[0]->collision[1]=true;
       }
       break;
     case 2:
@@ -84,6 +86,3 @@ void Constrain::solve(){
     // case 4:
   }
 }
-// void Cloth::reset(){
-
-// }

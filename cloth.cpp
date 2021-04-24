@@ -94,17 +94,21 @@ void Cloth::step(float dt){
       it->solve();
     }    
   }
+  vec3 dp(0.0f);
   for(auto it=particles.begin();it!=particles.end();it++){
     it->v=(it->tmp-it->pos)/dt;
-    // collision set velocity to 0  
-    if(it->collision[0])it->v-=it->tmp*(it->v*it->tmp);
+    // collision , reflect velocity 
+    if(it->collision[0]){
+      it->v-=         2.0f*normalize(it->tmp-ball.tmp)*((it->v-ball.v)*normalize(it->tmp-ball.tmp));
+      dp+=1.0f/it->w* 2.0f*normalize(it->tmp-ball.tmp)*((it->v-ball.v)*normalize(it->tmp-ball.tmp));
+    }
     if(it->collision[1])it->v.y=0.0f;
     it->pos=it->tmp;
     // it->v_updated=false;
   }  
-  ball.v=(ball.tmp-ball.pos)/dt;
+  ball.v=(ball.tmp-ball.pos)/dt+dp*ball.w;
   ball.pos=ball.tmp;
-  if(collisions.size())collisions.pop_back();
+  while(collisions.size())collisions.pop_back();
   // cout<<"size after:"<<collisions.size()<<endl;
 }
 void Constrain::solve(){
@@ -112,7 +116,6 @@ void Constrain::solve(){
   if(ext_obj){
     // collision constrains
     float C=0.0f;
-    if(ext_obj->w>epsilon)C=1.0f/ext_obj->w;
     vec3 cm(0.0f);
     for(auto it=m.begin();it!=m.end();it++){
       vec3 d=(*it)->tmp-ext_obj->tmp;
@@ -124,6 +127,7 @@ void Constrain::solve(){
       }
     }
     if(ext_obj->w>epsilon){
+      C+=1.0f/ext_obj->w;
       ext_obj->tmp+=cm/C;
       for(auto it=m.begin();it!=m.end();it++){
         (*it)->tmp+=cm/C;

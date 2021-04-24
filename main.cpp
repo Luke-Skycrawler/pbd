@@ -11,9 +11,9 @@
 using namespace glm;
 static const vec3 g(0.0f,-0.98f,0.0f);
 Plane plane;
-Ball_Dynamic ball(0.1f,vec3(0.0f,1.0f,0.0f),g,0.0005f);
+Ball_Dynamic ball(0.1f,vec3(0.0f,1.5f,0.0f),g,0.001f);
 // Ball_Dynamic ball(0.6f,vec3(0.0f,0.0f,0.0f),vec3(0.0f),0.0f);
-Cloth cloth(2.0f,2.0f,50,50,1.0f,0.0f,true);
+Cloth cloth(2.0f,2.0f,50,50,0.2f,0.0f,true);
 float time;
 void init(int argc, char* argv[]){
   glClearColor(0.7f, 0.7f, 0.7f, 1.0f);

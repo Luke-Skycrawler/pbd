@@ -63,7 +63,7 @@ void reshape(int width, int height){
   glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpecular);
 }
 static float speeds[]={1.0f,5.0f,25.0f,125.0f};
-static float weights[]={0.01f,0.001f,0.0001f};
+static float weights[]={0.002f,0.001f,0.0001f};
 static int cspeed=1,cweight=1;
 static float SlowMotion=speeds[cspeed];
 void idle(void){
@@ -82,7 +82,7 @@ void idle(void){
 void keyboard(unsigned char key , int x , int y){
   switch(key){
     case 27: exit(0); break; // esc
-    case 'r':case'R':cloth.reset();break;
+    case 'r':case 'R':cloth.reset();cloth.pin();ball.reset();break;
     case ' ':cloth.pin(false);break;
   }
 }

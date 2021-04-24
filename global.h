@@ -24,11 +24,16 @@ struct Particle{
 
 struct Ball_Dynamic : Particle{
   Ball ball;
+  const glm::vec3 pos_init;
   Ball_Dynamic(float radius,glm::vec3 pos,glm::vec3 acc,float w)
-  :ball(radius),Particle(pos,acc,w){
+  :ball(radius),Particle(pos,acc,w),pos_init(pos){
     
   }
   void draw();
+  void reset(){
+    pos=pos_init;
+    v=glm::vec3(0.0f);
+  }
 };
 struct Constrain{
   std::vector<Particle*> m;

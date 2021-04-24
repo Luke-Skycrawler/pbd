@@ -1,19 +1,19 @@
 #define _CRT_SECURE_NO_WARNINGS
-#include <cstdlib>
 #include <GL/glut.h>
 
-
+#include <iostream>
 #include <vector>
 #include <string>
 #include <glm/glm.hpp>
 #define _MAIN
 #include "global.h"
 using namespace glm;
+using namespace std;
 static const vec3 g(0.0f,-0.98f,0.0f);
 Plane plane;
-Ball_Dynamic ball(0.1f,vec3(0.0f,1.5f,0.0f),g,0.001f);
+Ball_Dynamic ball(0.3f,vec3(0.0f,1.5f,0.0f),g,0.001f);
 // Ball_Dynamic ball(0.6f,vec3(0.0f,0.0f,0.0f),vec3(0.0f),0.0f);
-Cloth cloth(2.0f,2.0f,50,50,0.2f,0.0f,true);
+Cloth cloth(2.0f,2.0f,50,50,1.0f,0.0f,true);
 float time;
 void init(int argc, char* argv[]){
   glClearColor(0.7f, 0.7f, 0.7f, 1.0f);
@@ -62,9 +62,11 @@ void reshape(int width, int height){
   glLightfv(GL_LIGHT0, GL_AMBIENT,  lightAmbient);
   glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpecular);
 }
-
+static float speeds[]={1.0f,5.0f,25.0f,125.0f};
+static float weights[]={0.01f,0.001f,0.0001f};
+static int cspeed=1,cweight=1;
+static float SlowMotion=speeds[cspeed];
 void idle(void){
-  static const int SlowMotion=5.0f;
   float t = (float)glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
   float dt = t - time;
 
@@ -84,6 +86,31 @@ void keyboard(unsigned char key , int x , int y){
     case ' ':cloth.pin(false);break;
   }
 }
+void special(int key, int x, int y){
+  if (key == GLUT_KEY_UP) {
+    cspeed=(cspeed+1)%3;
+    SlowMotion=speeds[cspeed];
+    cout<<"Slow Motion: "<<SlowMotion<<endl;
+  }
+  if (key == GLUT_KEY_DOWN) {
+    if(cspeed)
+      cspeed--;
+    else cspeed=2;
+    SlowMotion=speeds[cspeed];
+    cout<<"Slow Motion: "<<SlowMotion<<endl;
+  }
+  if (key == GLUT_KEY_LEFT) {
+    if(cweight)cweight--;
+    else cweight=2;
+    ball.w=weights[cweight];
+    cout<<"mass: "<<1.0f/ball.w<<endl;
+  }
+  if (key == GLUT_KEY_RIGHT) {
+    cweight=(cweight+1)%3;
+    ball.w=weights[cweight];
+    cout<<"mass: "<<1.0f/ball.w<<endl;
+  }
+}
 
 
 int main(int argc, char* argv[]) {
@@ -98,7 +125,7 @@ int main(int argc, char* argv[]) {
   glutReshapeFunc(reshape);
   glutIdleFunc(idle);
   glutKeyboardFunc(keyboard);
-
+  glutSpecialFunc(special);
   glutMainLoop();
   return 0;
 }

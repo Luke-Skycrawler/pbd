@@ -6,7 +6,6 @@ struct Ball{
   Ball(float radius=0.6f):radius(radius){}
   static const glm::vec3 color;
   void draw(glm::vec3 pos=glm::vec3(0.0f)){
-    glTranslatef(pos.x,pos.y,pos.z);
     glColor3fv((float*)&color);
     glutSolidSphere(radius,30,30);
   }
@@ -29,17 +28,18 @@ struct Ball_Dynamic : Particle{
   :ball(radius),Particle(pos,acc,w){
     
   }
-  void draw(){ball.draw(pos);}
+  void draw();
 };
 struct Constrain{
   std::vector<Particle*> m;
   Particle * ext_obj;
   float k,len_slack;
-  Constrain(Particle &m1):ext_obj(NULL){
+  Constrain(Particle &m1,Particle *ext_obj=NULL):ext_obj(ext_obj){
+    // collision constrain with external object
     m.push_back(&m1);
   }
-  Constrain(Particle &m1,Particle &m2,float kstretch=1.0f)
-  :k(kstretch),len_slack(glm::length(m1.pos-m2.pos)),ext_obj(NULL){
+  Constrain(Particle &m1,Particle &m2,float k)
+  :k(k),len_slack(glm::length(m1.pos-m2.pos)),ext_obj(NULL){
     m.push_back(&m1);
     m.push_back(&m2);
   }
@@ -54,18 +54,20 @@ struct Constrain{
 };
 struct Cloth{
   float x,y,kbend,kstretch;
-  static const int iterations=100;
+  static const int iterations=20;
   int slicex,slicey,gerneric_constrains_cnt;
 
-  std::vector<Constrain> constrains;
+  std::vector<Constrain> constrains,collisions;
   std::vector<Particle> particles;
-  bool pinned;
+  
   Cloth(float x,float y,int slicex,int slicey,float kstretch=1.0f,float kbend=0.0f,bool pinned=false):
-  x(x),y(y),slicex(slicex),slicey(slicey),kstretch(kstretch),kbend(kbend),pinned(pinned){
+  x(x),y(y),slicex(slicex),slicey(slicey),kstretch(kstretch),kbend(kbend){
     particles.resize(slicex*slicey);
     reset();
+    if(pinned)pin();
     gen();
   }
+  void pin(bool _pin=true);
   void gen();
   void reset();
   void draw();

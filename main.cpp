@@ -9,8 +9,10 @@
 #define _MAIN
 #include "global.h"
 using namespace glm;
+static const vec3 g(0.0f,-0.98f,0.0f);
 Plane plane;
-Ball_Dynamic ball(0.6f,vec3(0.0f),vec3(0.0f),0.0f);
+Ball_Dynamic ball(0.1f,vec3(0.0f,1.0f,0.0f),g,0.0005f);
+// Ball_Dynamic ball(0.6f,vec3(0.0f,0.0f,0.0f),vec3(0.0f),0.0f);
 Cloth cloth(2.0f,2.0f,50,50,1.0f,0.0f,true);
 float time;
 void init(int argc, char* argv[]){
@@ -19,7 +21,6 @@ void init(int argc, char* argv[]){
 
   time = (float)glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
 }
-
 void display(void){
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -80,6 +81,7 @@ void keyboard(unsigned char key , int x , int y){
   switch(key){
     case 27: exit(0); break; // esc
     case 'r':case'R':cloth.reset();break;
+    case ' ':cloth.pin(false);break;
   }
 }
 

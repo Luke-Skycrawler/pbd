@@ -14,12 +14,12 @@ Plane plane;
 Ball_Dynamic ball(0.3f,vec3(0.0f,1.5f,0.0f),g,0.001f);
 // Ball_Dynamic ball(0.6f,vec3(0.0f,0.0f,0.0f),vec3(0.0f),0.0f);
 Cloth cloth(2.0f,2.0f,50,50,1.0f,0.0f,true);
-float time;
+float realtime;
 void init(int argc, char* argv[]){
   glClearColor(0.7f, 0.7f, 0.7f, 1.0f);
   // glEnable(GL_CULL_FACE);
 
-  time = (float)glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
+  realtime = (float)glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
 }
 void display(void){
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -68,14 +68,14 @@ static int cspeed=1,cweight=1;
 static float SlowMotion=speeds[cspeed];
 void idle(void){
   float t = (float)glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
-  float dt = t - time;
+  float dt = t - realtime;
 
   dt = (dt > 0.033f) ? 0.033f : dt; // keep 30fps
 
   // cloth.step(0);
   cloth.step(dt/SlowMotion);
 
-  time=t;
+  realtime=t;
   glutPostRedisplay();
 }
 
